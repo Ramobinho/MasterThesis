@@ -4,10 +4,12 @@
 abstract class InfraStructureBehaviour : MonoBehaviour
 {
     protected MapReader map;
+    protected MeshMaker meshMaker;
 
     void Awake()
     {
-        map = GetComponent<MapReader>();    
+        map = GetComponent<MapReader>();
+        meshMaker = GetComponent<MeshMaker>();
     }
 
     protected Vector3 GetCentre(OsmWay way)

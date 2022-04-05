@@ -8,15 +8,15 @@ using UnityEngine.UI;
 [RequireComponent(typeof(MapReader))]
 class MeshMaker : InfraStructureBehaviour
 {
-    private MapReader map;
-
     public string HeightMap;
 
     public Material terrainMaterial;
 
-    GameObject[] gos;
-    MeshFilter[] mfs;
-    MeshRenderer[] mrs;
+    public GameObject[] gos { get; private set; }
+    public MeshFilter[] mfs { get; private set; }
+    public MeshRenderer[] mrs { get; private set; }
+
+    public MeshCollider[] mcs { get; private set; }
 
     Vector3[,] vertices;
     int[,] triangles;
@@ -33,21 +33,9 @@ class MeshMaker : InfraStructureBehaviour
     private int originX;
     private int originZ;
 
-    private double upleftLat = 50.912744;
-    private double upleftLon = 4.538111;
-
-    private double downleftLat = 50.7329611;
-    private double downleftLon = 4.53746111111;
-
-    private double uprightLat = 50.9112028;
-    private double uprightLon = 4.9930972222225;
-
-    private double downrightLat = 50.731422;
-    private double downrightLon = 4.990711;
-
     private float[,] heights;
 
-    private int quads;
+    public int quads { get; private set; }
 
     public int res = 64000;
     public int overhead = 200;
@@ -114,35 +102,6 @@ class MeshMaker : InfraStructureBehaviour
     {
         Debug.Log("Set Bounds");
 
-        /*double upleftX = MercatorProjection.lonToX(upleftLon);
-        double upleftZ = MercatorProjection.latToY(upleftLat);
-        double downleftX = MercatorProjection.lonToX(downleftLon);
-        double downleftZ = MercatorProjection.latToY(downleftLat);
-        double uprightX = MercatorProjection.lonToX(uprightLon);
-        double uprightZ = MercatorProjection.latToY(uprightLat);
-        double downrightX = MercatorProjection.lonToX(downrightLon);
-        double downrightZ = MercatorProjection.latToY(downrightLat);*/
-        /*double upleftX = MercatorProjection.lonToX(2.54154);
-        double upleftZ = MercatorProjection.latToY(51.51);
-        double downleftX = upleftX;
-        double downleftZ = MercatorProjection.latToY(50.6756);
-        double uprightX = MercatorProjection.lonToX(5.92);
-        double uprightZ = upleftZ;
-        double downrightX = uprightX;
-        double downrightZ = downleftZ;
-        Debug.Log("bounds: " + upleftX + ", " + upleftZ);
-        Debug.Log(uprightX + ", " + uprightZ);
-        Debug.Log(downleftX + ", " + downleftZ);
-        Debug.Log(downrightX + ", " + downrightZ);
-
-        double minX = (upleftX + downleftX) / 2;
-        double maxX = (uprightX + downrightX) / 2;
-        double rangeX = maxX - minX;
-
-        double minZ = (downrightZ + downleftZ) / 2;
-        double maxZ = (uprightZ + upleftZ) / 2;
-        double rangeZ = maxZ - minZ;*/
-
         double upleftX = 505249.054;
         double upleftZ = 6572592.141;
         double downleftX = 505249.054;
@@ -157,63 +116,19 @@ class MeshMaker : InfraStructureBehaviour
         double minX = upleftX;
         double maxZ = upleftZ;
 
-        Debug.Log("range: " + (int)rangeX);
-        Debug.Log((int)rangeZ);
-
         scaleX = (float)rangeX / 32107;
         scaleZ = (float)rangeZ / 20171;
 
-        Debug.Log("scale: " + scaleX);
-        Debug.Log(scaleZ);
-
-
-        /*originX = (int)((MercatorProjection.lonToX(map.bounds.MinLon) - minX) / scaleX) - (int)(11 / scaleX);
-        originZ = (int)((maxZ - MercatorProjection.latToY(map.bounds.MaxLat)) / scaleZ) - (int)(68 / scaleZ);*/
         originX = (int)((MercatorProjection.lonToX(map.bounds.MinLon) - minX) / scaleX);
         originZ = (int)((maxZ - MercatorProjection.latToY(map.bounds.MaxLat)) / scaleZ);
-        /*double offsetX = -0.00139487 * (originX - 10542);
-        double offsetZ = -0.00750812 * (originZ - 2373);
-
-        offsetX -= 8.86;
-        offsetZ -= 39.88;
-
-        offsetX += 0.00475509 * (originZ - 2373);
-        offsetZ += -0.0055795 * (originX - 10542);
-
-        offsetX -= 39.88;
-        offsetZ -= 8.86;
-
-        originX += (int)(offsetX);
-        originZ += (int)(offsetZ);
-
-        Debug.Log(offsetX + " " + offsetZ);*/
-
-        Debug.Log("origin: " + originX);
-        Debug.Log(originZ);
 
         xSize = (int)((MercatorProjection.lonToX(map.bounds.MaxLon) - MercatorProjection.lonToX(map.bounds.MinLon)) / scaleX);
         zSize = (int)((MercatorProjection.latToY(map.bounds.MaxLat) - MercatorProjection.latToY(map.bounds.MinLat)) / scaleZ);
-        /*xSize = (int)((MercatorProjection.lonToX(map.bounds.MaxLon) - MercatorProjection.lonToX(map.bounds.MinLon)) / scaleX);
-        zSize = (int)((MercatorProjection.latToY(map.bounds.MaxLat) - MercatorProjection.latToY(map.bounds.MinLat)) / scaleZ);*/
-
-        Debug.Log("size: " + xSize);
-        Debug.Log(zSize);
-        Debug.Log("Set Bounds done");
 
         Vector2 topleft = new Vector2((float)upleftX, (float)upleftZ);
         Vector2 bottomleft = new Vector2((float)downleftX, (float)downleftZ);
         Vector2 topright = new Vector2((float)uprightX, (float)uprightZ);
         Vector2 bottomright = new Vector2((float)downrightX, (float)downrightZ);
-
-        Debug.Log("Distance in X: ");
-        Debug.Log(Vector2.Distance(topleft, topright));
-        Debug.Log(Vector2.Distance(bottomleft, bottomright));
-
-        Debug.Log("Distance in Z: ");
-        Debug.Log(Vector2.Distance(topleft, bottomleft));
-        Debug.Log(Vector2.Distance(topright, bottomright));
-
-        Debug.Log(MercatorProjection.lonToX(map.bounds.MinLon) + " " + MercatorProjection.latToY(map.bounds.MaxLat));
 
     }
     
@@ -237,7 +152,6 @@ class MeshMaker : InfraStructureBehaviour
                 {
                     for(int x = 0; x <= s_xSize; x++, i++)
                     {
-                        //Debug.Log("x: " + x + " xgrid: " + xGrid + " s_x: " + s_xSize + " z: " + z + " zgrid: " + zGrid + " s_z: " + s_zSize);
                         float height = heights[x + xGrid * s_xSize, z + zGrid * s_zSize];
                         vertices[i, counter] = new Vector3(((x + xGrid * s_xSize) * scaleX) - (xSize / 2)*scaleX, height, ((z + zGrid * s_zSize) * scaleZ) - (zSize / 2)*scaleZ);
                         uvs[i, counter] = new Vector2((float)x / s_xSize, (float)z / s_zSize);
@@ -279,32 +193,6 @@ class MeshMaker : InfraStructureBehaviour
                     for (int x = 0; x <= s_xSize; x++, i++)
                     {
                         colors[i, counter] = gradient.Evaluate(Mathf.InverseLerp(minHeight, maxHeight, vertices[i, counter].y));
-                        /*float bracket = Mathf.InverseLerp(minHeight, maxHeight, vertices[i, counter].y);
-                        if (bracket < 0.2)
-                        {
-                            colors[i, counter] = Color.black;
-                        }
-                        else if (bracket < 0.4)
-                        {
-                            colors[i, counter] = Color.green;
-                        }
-                        else if (bracket < 0.6)
-                        {
-                            colors[i, counter] = Color.blue;
-                        }
-                        else if (bracket < 0.8)
-                        {
-                            colors[i, counter] = Color.red;
-                        }
-                        else
-                        {
-                            colors[i, counter] = Color.white;
-
-                        }
-                        colors[i, counter] = i % 2 == 0 ? gradient.Evaluate(Mathf.InverseLerp(minHeight, maxHeight, vertices[i, counter].y)) : gradient2.Evaluate(Mathf.InverseLerp(minHeight, maxHeight, vertices[i, counter].y));
-                        */
-
-                        
                     }
                 }
             }
@@ -331,8 +219,6 @@ class MeshMaker : InfraStructureBehaviour
         triangles = new int[s_xSize * s_zSize * 6, quads * quads];
         colors = new Color[(s_xSize + 1) * (s_zSize + 1), quads * quads];
 
-        Debug.Log("xSize: " + xSize + " zSize: " + zSize + " s_xSize: " + s_xSize + " s_zSize: " + s_zSize + " quads: " + quads);
-
         Debug.Log("Calculate grid done");
     }
 
@@ -345,12 +231,14 @@ class MeshMaker : InfraStructureBehaviour
         gos = new GameObject[quads * quads];
         mfs = new MeshFilter[quads * quads];
         mrs = new MeshRenderer[quads * quads];
+        mcs = new MeshCollider[quads * quads];
 
         for (int i = 0; i < quads * quads; i++)
         {
             gos[i] = new GameObject("Terrain" + i);
             mfs[i] = gos[i].AddComponent<MeshFilter>();
             mrs[i] = gos[i].AddComponent<MeshRenderer>();
+            mcs[i] = gos[i].AddComponent<MeshCollider>();
 
             mrs[i].material = terrainMaterial;
 
@@ -360,6 +248,8 @@ class MeshMaker : InfraStructureBehaviour
             mfs[i].mesh.colors = Enumerable.Range(0, uvs.GetLength(0)).Select(x => colors[x, i]).ToArray();
 
             mfs[i].mesh.RecalculateNormals();
+
+            mcs[i].sharedMesh = mfs[i].sharedMesh;
         }
 
         Debug.Log("Update mesh done");
@@ -387,7 +277,6 @@ class MeshMaker : InfraStructureBehaviour
             z_count = (int)((v.z - min.z) / scaleZ);
             z_count *= (s_xSize + 1);
             int j = x_count + z_count;
-            //Debug.Log("node: " + v + " vertices: " + vertices[j, counter] + " " + vertices[j + 1, counter] + " " + vertices[j + s_xSize + 1, counter] + " " + vertices[j + s_xSize + 2, counter]);
             Vector3 a = vertices[j, counter];
             Vector3 b = vertices[j+1, counter];
             Vector3 c = vertices[j+s_xSize+1, counter];
