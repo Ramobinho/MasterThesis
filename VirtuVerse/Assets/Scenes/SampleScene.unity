@@ -199,7 +199,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   terrainData1: {fileID: 0}
   meshMaker: {fileID: 0}
-  resourceFile: oudemarkt
+  terrainMaker: {fileID: 0}
+  resourceFile: kot
 --- !u!114 &60188973
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -207,13 +208,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 60188968}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 33adc9846da4d324aae6c9fddac35191, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   HeightMap: Assets/Resources/DHM_k32.raw
-  terrainMaterial: {fileID: 2100000, guid: e374396b7d9d0e8448d9cc4f11fbd503, type: 2}
+  terrainMaterial: {fileID: 2100000, guid: 2928a9e17fc690a44a1c5c00824149af, type: 2}
   res: 64000
 --- !u!114 &60188974
 MonoBehaviour:

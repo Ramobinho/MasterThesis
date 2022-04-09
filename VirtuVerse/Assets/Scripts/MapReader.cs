@@ -11,6 +11,7 @@ class MapReader : MonoBehaviour
     public TerrainData terrainData1;
     public float[,] heights;
     public MeshMaker meshMaker;
+    public TerrainMaker terrainMaker;
 
     public string resourceFile;
 
@@ -21,6 +22,7 @@ class MapReader : MonoBehaviour
         nodes = new Dictionary<ulong, OsmNode>();
         ways = new List<OsmWay>();   
         meshMaker = GetComponent<MeshMaker>();
+        terrainMaker = GetComponent<TerrainMaker>();
 
         var txtAsset = Resources.Load<TextAsset>(resourceFile);
 
@@ -82,7 +84,8 @@ class MapReader : MonoBehaviour
         foreach (XmlNode n in xmlNodeList)
         {
             OsmNode node = new OsmNode(n);
-            node.Z = meshMaker.FindHeight(node).y;
+            //node.Z = meshMaker.FindHeight(node).y;
+            node.Z = terrainMaker.FindHeight(node).y;
             nodes[node.ID] = node;
         }
     }

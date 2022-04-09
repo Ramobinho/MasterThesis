@@ -42,11 +42,6 @@ class MeshMaker : InfraStructureBehaviour
     private float scaleX;
     private float scaleZ;
 
-    private void Awake()
-    {
-        map = GetComponent<MapReader>();
-    }
-
     IEnumerator Start()
     {
         Debug.Log("Start mesh generation loop");
