@@ -12,11 +12,13 @@ class TerrainMaker : InfraStructureBehaviour
 
     public Material terrainMaterial;
 
+    private GameObject terrain;
+    private Terrain huh;
+
     private int xSize;
     private int zSize;
 
-    private int newX;
-    private int newZ;
+    private int newSize;
 
     private int originX;
     private int originZ;
@@ -24,8 +26,8 @@ class TerrainMaker : InfraStructureBehaviour
     private float[,] heights;
     private float[,] interHeights;
 
-    private float minHeight = 0;
-    private float maxHeight = 10000;
+    private float minHeight = 10000;
+    private float maxHeight = 0;
 
     public int res = 64000;
     private float scaleX;
@@ -41,6 +43,10 @@ class TerrainMaker : InfraStructureBehaviour
 
         GenerateTerrain(maxHeight, minHeight);
 
+        Debug.Log(huh.GetPosition() + " " + (huh.GetPosition() + new Vector3(xSize * scaleX,0,zSize * scaleZ)) + " " + (xSize * scaleX) + " " + (zSize * scaleZ) + " " + (newSize + 1));
+
+        map.HeightsReady();
+
         yield return null;
     }
 
@@ -49,7 +55,7 @@ class TerrainMaker : InfraStructureBehaviour
 
         Debug.Log("Get heights");
 
-        heights = new float[zSize, xSize];
+        heights = new float[zSize+1, xSize+1];
 
         using (var file = System.IO.File.OpenRead(HeightMap))
         using (var reader = new System.IO.BinaryReader(file))
@@ -59,7 +65,7 @@ class TerrainMaker : InfraStructureBehaviour
                 for (int x = 0; x < 32107; x++)
                 {
                     float v = (float)reader.ReadUInt16();
-                    if (x >= originX && x < originX + xSize && z > originZ && z <= originZ + zSize)
+                    if (x >= originX && x <= originX + xSize && z >= originZ && z <= originZ + zSize)
                     {
                         heights[zSize - z + originZ, x - originX] = v;
                         maxHeight = v > maxHeight ? v : maxHeight;
@@ -73,15 +79,15 @@ class TerrainMaker : InfraStructureBehaviour
             }
         }
 
-        for (int i = 0; i < xSize; i++)
+        for (int i = 0; i <= xSize; i++)
         {
-            for (int j = 0; j < zSize; j++)
+            for (int j = 0; j <= zSize; j++)
             {
                 heights[j, i] = heights[j, i] / maxHeight;
 
             }
         }
-
+        Debug.Log("max/min: " + maxHeight + " " + minHeight);
         Debug.Log("Get heights done");
     }
 
@@ -112,7 +118,7 @@ class TerrainMaker : InfraStructureBehaviour
         xSize = (int)((MercatorProjection.lonToX(map.bounds.MaxLon) - MercatorProjection.lonToX(map.bounds.MinLon)) / scaleX);
         zSize = (int)((MercatorProjection.latToY(map.bounds.MaxLat) - MercatorProjection.latToY(map.bounds.MinLat)) / scaleZ);
 
-        Debug.Log("size terrain: " + xSize + " " + zSize);
+        Debug.Log("origin terrain: " + originX + " " + originZ);
 
         closestPower();
 
@@ -131,7 +137,7 @@ class TerrainMaker : InfraStructureBehaviour
             size *= 2;
         }
 
-        newX = newZ = size;
+        newSize = size;
 
         Debug.Log("Closest power done");
     }
@@ -141,14 +147,14 @@ class TerrainMaker : InfraStructureBehaviour
         Debug.Log("Starting terrain generation");
 
         TerrainData test = new TerrainData();
-        test.heightmapResolution = newX + 1;
+        test.heightmapResolution = newSize + 1;
         test.baseMapResolution = 1024;
         test.SetDetailResolution(1024, 32);
-        test.size = new Vector3(newX, maxHeight - minHeight, newZ);
-        GameObject terrain = new GameObject("Terrain");
+        test.size = new Vector3(newSize, maxHeight - minHeight, newSize);
+        terrain = new GameObject("Terrain");
 
         TerrainCollider tercol = terrain.AddComponent<TerrainCollider>();
-        Terrain huh = terrain.AddComponent<Terrain>();
+        huh = terrain.AddComponent<Terrain>();
 
         tercol.terrainData = test;
         huh.terrainData = test;
@@ -172,33 +178,33 @@ class TerrainMaker : InfraStructureBehaviour
     {
         Debug.Log("Starting to interpolate heights");
 
-        interHeights = new float[newZ + 1, newX + 1];
+        interHeights = new float[newSize + 1, newSize + 1];
 
-        float stepX = xSize;
-        float stepZ = zSize;
+        float stepX = xSize + 1;
+        float stepZ = zSize + 1;
 
-        stepX /= (newX + 1);
-        stepZ /= (newZ + 1);
+        stepX /= (newSize + 1);
+        stepZ /= (newSize + 1);
 
-        for (int i = 0; i <= newX; i++)
+        for (int i = 0; i <= newSize; i++)
         {
-            for (int j = 0; j <= newZ; j++)
+            for (int j = 0; j <= newSize; j++)
             {
                 //we willen de hoekpunten bewaren maar alles ertussen eigenlijk interpoleren
                 //we gaan voor elke index in onze interHeights interpoleren tussen de vier overeenkomstige hoogtepunten 
                 //uit de oorspronkelijke heights array.
 
-                if (i == newX && j == newZ)
+                if (i == newSize && j == newSize)
                 {
                     interHeights[j, i] = heights[(int) (j * stepZ), (int) (i * stepX)];
                 }
-                else if (j == newZ)
+                else if (j == newSize)
                 {
                     float a = heights[(int)(j * stepZ), (int)(i * stepX)];
                     float b = heights[(int)(j * stepZ), (int)((i + 1) * stepX)];
                     interHeights[j, i] = Mathf.Lerp(a, b, (i * stepX) - a);
                 }
-                else if (i == newX)
+                else if (i == newSize)
                 {
                     float a = heights[(int)(j * stepZ), (int)(i * stepX)];
                     float c = heights[(int)((j + 1) * stepZ), (int)(i * stepX)];
@@ -227,34 +233,17 @@ class TerrainMaker : InfraStructureBehaviour
     //Dit is de functie die MapReader gebruikt om aan een OsmNode een hoogte toe te kennen.
     public Vector3 FindHeight(OsmNode p)
     {
-        /*Vector3 v = p - map.bounds.Centre;
+        //is zien of via terraindata de heights gelezen kunnen worden.        
 
-        if (v.x < vertices[0, 0].x || v.z < vertices[0, 0].z || v.x > vertices[(s_xSize + 1) * (s_zSize + 1) - 1, quads * quads - 1].x || v.z >= vertices[(s_xSize + 1) * (s_zSize + 1) - 1, quads * quads - 1].z)
+        Vector3 v = p - map.bounds.Centre;
+
+        if (v.x < huh.GetPosition().x || v.z < huh.GetPosition().z || v.x > huh.GetPosition().x + (xSize * scaleX) || v.z >= huh.GetPosition().z + (zSize * scaleZ))
         {
-            v.z = 0;
             return v;
         }
-        else
-        {
-            int x_count = (int)(((v.x / scaleX) + xSize / 2) / s_xSize);
-            int z_count = (int)(((v.z / scaleZ) + zSize / 2) / s_zSize);
-            z_count *= quads;
-            int counter = x_count + z_count;
-            Vector3 max = vertices[(s_xSize + 1) * (s_zSize + 1) - 1, counter];
-            Vector3 min = vertices[0, counter];
-            x_count = (int)((v.x - min.x) / scaleX);
-            z_count = (int)((v.z - min.z) / scaleZ);
-            z_count *= (s_xSize + 1);
-            int j = x_count + z_count;
-            Vector3 a = vertices[j, counter];
-            Vector3 b = vertices[j + 1, counter];
-            Vector3 c = vertices[j + s_xSize + 1, counter];
-            Vector3 d = vertices[j + s_xSize + 2, counter];
-            Vector3 abu = Vector3.Lerp(a, b, (v.x - a.x) / (b.x - a.x));
-            Vector3 cdv = Vector3.Lerp(c, d, (v.x - c.x) / (d.x - c.x));
-            return Vector3.Lerp(abu, cdv, (cdv.z - v.z) / (cdv.z - abu.z));
-        }*/
-        return p;
+
+        Vector3 nv = new Vector3(v.x, huh.SampleHeight(v), v.z);
+        return nv;
     }
 }
 

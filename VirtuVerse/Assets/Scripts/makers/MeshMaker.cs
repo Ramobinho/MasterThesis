@@ -257,29 +257,27 @@ class MeshMaker : InfraStructureBehaviour
 
         if (v.x < vertices[0, 0].x || v.z < vertices[0, 0].z || v.x > vertices[(s_xSize + 1) * (s_zSize + 1) - 1, quads * quads - 1].x || v.z >= vertices[(s_xSize + 1) * (s_zSize + 1) - 1, quads * quads - 1].z)
         {
-            v.z = 0;
             return v;
         }
-        else
-        {
-            int x_count = (int)(((v.x / scaleX) + xSize / 2) / s_xSize);
-            int z_count = (int)(((v.z / scaleZ) + zSize / 2) / s_zSize);
-            z_count *= quads;
-            int counter = x_count + z_count;
-            Vector3 max = vertices[(s_xSize + 1) * (s_zSize + 1) - 1, counter];
-            Vector3 min = vertices[0, counter];
-            x_count = (int)((v.x - min.x) / scaleX);
-            z_count = (int)((v.z - min.z) / scaleZ);
-            z_count *= (s_xSize + 1);
-            int j = x_count + z_count;
-            Vector3 a = vertices[j, counter];
-            Vector3 b = vertices[j+1, counter];
-            Vector3 c = vertices[j+s_xSize+1, counter];
-            Vector3 d = vertices[j+s_xSize+2, counter];
-            Vector3 abu = Vector3.Lerp(a, b, (v.x - a.x)/(b.x - a.x));
-            Vector3 cdv = Vector3.Lerp(c, d, (v.x - c.x) / (d.x - c.x));
-            return Vector3.Lerp(abu,cdv, (cdv.z - v.z)/(cdv.z - abu.z));
-        }
+
+        int x_count = (int)(((v.x / scaleX) + xSize / 2) / s_xSize);
+        int z_count = (int)(((v.z / scaleZ) + zSize / 2) / s_zSize);
+        z_count *= quads;
+        int counter = x_count + z_count;
+        Vector3 max = vertices[(s_xSize + 1) * (s_zSize + 1) - 1, counter];
+        Vector3 min = vertices[0, counter];
+        x_count = (int)((v.x - min.x) / scaleX);
+        z_count = (int)((v.z - min.z) / scaleZ);
+        z_count *= (s_xSize + 1);
+        int j = x_count + z_count;
+        Vector3 a = vertices[j, counter];
+        Vector3 b = vertices[j+1, counter];
+        Vector3 c = vertices[j+s_xSize+1, counter];
+        Vector3 d = vertices[j+s_xSize+2, counter];
+        Vector3 abu = Vector3.Lerp(a, b, (v.x - a.x)/(b.x - a.x));
+        Vector3 cdv = Vector3.Lerp(c, d, (v.x - c.x) / (d.x - c.x));
+        return Vector3.Lerp(abu,cdv, (cdv.z - v.z)/(cdv.z - abu.z));
+        
     }
 }
 

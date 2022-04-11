@@ -84,7 +84,6 @@ class MapReader : MonoBehaviour
         foreach (XmlNode n in xmlNodeList)
         {
             OsmNode node = new OsmNode(n);
-            //node.Z = meshMaker.FindHeight(node).y;
             node.Z = terrainMaker.FindHeight(node).y;
             nodes[node.ID] = node;
         }
